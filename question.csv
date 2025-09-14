@@ -1,0 +1,55 @@
+id,section,question,options,answer
+1,Math,What is 5 + 7?,"10|11|12|13",12
+2,Math,What is 9 × 3?,"18|27|36|45",27
+3,Math,Simplify: 20 ÷ 5,"2|3|4|5",4
+4,Math,Square of 6 is?,"12|18|24|36",36
+5,Math,Cube root of 27?,"2|3|4|5",3
+6,Math,What is 15 − 7?,"6|7|8|9",8
+7,Math,Value of π (approx)?,"2.12|3.14|3.50|4.00",3.14
+8,Math,What is 100 ÷ 25?,"2|3|4|5",4
+9,Math,What is 12 × 12?,"122|124|144|156",144
+10,Math,What is 50% of 200?,"50|75|100|150",100
+
+11,Science,Which planet is closest to the Sun?,"Mercury|Venus|Earth|Mars",Mercury
+12,Science,Humans breathe in?,"Oxygen|Carbon Dioxide|Nitrogen|Helium",Oxygen
+13,Science,H2O is the formula for?,"Salt|Water|Oxygen|Hydrogen",Water
+14,Science,What gas do plants release in photosynthesis?,"CO2|Oxygen|Nitrogen|Methane",Oxygen
+15,Science,Which organ pumps blood?,"Brain|Lungs|Heart|Liver",Heart
+16,Science,Sun is a?,"Planet|Star|Asteroid|Comet",Star
+17,Science,Boiling point of water?,"50°C|75°C|100°C|150°C",100°C
+18,Science,Earth’s natural satellite?,"Mars|Moon|Venus|Sun",Moon
+19,Science,Which vitamin do we get from Sunlight?,"A|B|C|D",D
+20,Science,Normal body temperature (Celsius)?,"36|37|38|39",37
+
+21,English,Synonym of 'Big'?,"Tiny|Small|Large|Weak",Large
+22,English,Antonym of 'Happy'?,"Sad|Joyful|Excited|Glad",Sad
+23,English,Correct spelling?,"Enviroment|Environment|Envirnment|Environmnt",Environment
+24,English,Choose correct article: ___ apple,"A|An|The|No Article",An
+25,English,Past tense of 'Go'?,"Goes|Gone|Went|Going",Went
+26,English,She ___ a book now.,"read|reads|is reading|reading",is reading
+27,English,Plural of 'Child'?,"Childs|Children|Childrens|Childes",Children
+28,English,Antonym of 'Fast'?,"Quick|Rapid|Slow|Swift",Slow
+29,English,Choose synonym of 'Angry'?,"Furious|Calm|Happy|Glad",Furious
+30,English,Which is a noun?,"Run|Eat|City|Play",City
+
+31,History,Who discovered America?,"Columbus|Magellan|Vasco da Gama|Cook",Columbus
+32,History,Who was the first President of USA?,"George Washington|Lincoln|Jefferson|Adams",George Washington
+33,History,Year India got independence?,"1945|1947|1950|1952",1947
+34,History,Who was known as Iron Man of India?,"Nehru|Gandhi|Patel|Bose",Patel
+35,History,First World War began in?,"1912|1914|1916|1918",1914
+36,History,Who built the Taj Mahal?,"Akbar|Shah Jahan|Aurangzeb|Humayun",Shah Jahan
+37,History,Who was the last Mughal Emperor?,"Akbar II|Bahadur Shah Zafar|Aurangzeb|Humayun",Bahadur Shah Zafar
+38,History,Who was known as Father of Nation (India)?,"Patel|Ambedkar|Gandhi|Tilak",Gandhi
+39,History,Who invented printing press?,"Edison|Gutenberg|Bell|Newton",Gutenberg
+40,History,Who was the first Prime Minister of India?,"Gandhi|Patel|Nehru|Ambedkar",Nehru
+
+41,Geography,Capital of India?,"Delhi|Mumbai|Kolkata|Chennai",Delhi
+42,Geography,Which is the largest ocean?,"Atlantic|Pacific|Indian|Arctic",Pacific
+43,Geography,Which is the largest continent?,"Asia|Africa|Europe|Australia",Asia
+44,Geography,Mount Everest lies in?,"India|Nepal|China|Bhutan",Nepal
+45,Geography,Which is the longest river?,"Ganga|Amazon|Nile|Yangtze",Nile
+46,Geography,Desert in Rajasthan?,"Sahara|Thar|Gobi|Kalahari",Thar
+47,Geography,Which country has most population?,"USA|India|China|Russia",China
+48,Geography,Which is the smallest country?,"Vatican City|Monaco|Maldives|Bhutan",Vatican City
+49,Geography,Which country is called Land of Rising Sun?,"China|Japan|Thailand|Korea",Japan
+50,Geography,Which is the hottest planet?,"Venus|Mercury|Mars|Jupiter",Venus

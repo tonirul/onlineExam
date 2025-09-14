@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Exam App</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{ --sidebar-width:260px; --accent:#0b79d0; --muted:#a8b3bf; --bg:#f5f8fb; }
+    *{box-sizing:border-box;font-family:Inter, Arial, Helvetica, sans-serif}
+    body{margin:0;background:var(--bg);color:#222}
+    header{height:70px;background:#fff;border-bottom:1px solid #e6eef6;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:10}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:48px;height:48px;border-radius:6px;background:linear-gradient(135deg,#0b79d0,#4fb0ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .exam-title{font-size:14px;color:var(--accent);font-weight:600}
+    .top-center{position:absolute;left:50%;transform:translateX(-50%);text-align:center}
+    .timer{background:#fff;padding:6px 12px;border-radius:8px;border:1px solid #e0e6ea;display:inline-block;font-weight:700}
+    .container{display:flex;min-height:calc(100vh - 70px)}
+    main{flex:1;padding:18px 22px 90px 22px}
+    .question-area{background:#fff;border-radius:6px;padding:18px;border:1px solid #e9f0f6;min-height:500px}
+    .section-tabs{display:flex;gap:18px;margin-bottom:12px}
+    .tab{padding:10px 12px;border-radius:6px;background:linear-gradient(#fff,#f6fbff);border:1px solid #e6eef6;color:var(--accent);font-weight:600;cursor:pointer}
+    .question-text{font-size:15px;margin-bottom:18px}
+    .options{display:block;gap:12px}
+    .option{display:flex;align-items:flex-start;gap:10px;margin:8px 0}
+    .option input[type=radio]{margin-top:4px}
+    aside{width:var(--sidebar-width);padding:14px;border-left:1px solid #e6eef6;background:#eef6fb}
+    .legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .legend .item{display:flex;gap:6px;align-items:center;font-size:12px}
+    .swatch{width:14px;height:14px;border-radius:3px}
+    .swatch.green{background:#66c66b}
+    .swatch.orange{background:#ffb74d}
+    .swatch.grey{background:#d0d8e1}
+    .palette{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .qbtn{background:#fff;border:1px solid #cfdbe8;padding:8px;border-radius:6px;cursor:pointer}
+    .qbtn.active{border:2px solid #0b79d0}
+    .qbtn.answered{background:linear-gradient(180deg,#e6f7ea,#dff1dc);border-color:#9ad89a}
+    .qbtn.marked{background:linear-gradient(180deg,#fff1d9,#ffeecf);border-color:#ffcc66}
+    .qbtn.notvisited{background:#fff}
+    .bottom-bar{position:fixed;left:0;right:var(--sidebar-width);bottom:0;background:#fff;border-top:1px solid #e6eef6;padding:10px 14px;display:flex;align-items:center;gap:8px}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:20px;border:none;cursor:pointer;transition:0.3s}
+    .btn:hover{opacity:0.9}
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid #e6eef6}
+    .controls-left{display:flex;gap:8px;align-items:center}
+    .controls-right{margin-left:auto;display:flex;gap:8px}
+    .small{font-size:13px;color:#6b7280}
+    .candidate{color:#0b79d0;font-weight:700}
+    @media(max-width:900px){aside{display:none}.bottom-bar{right:0}}
+    /* Analysis Page */
+    #analysisPage{display:none;padding:30px;text-align:center}
+    #analysisPage h2{margin-bottom:20px}
+    #chartContainer{max-width:500px;margin:0 auto}
+    #restartExam{margin-top:20px}
+    /* Question Paper Modal */
+    #qpModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
+    #qpContent{background:#fff;width:80%;max-height:80%;overflow:auto;border-radius:8px;padding:20px;box-shadow:0 4px 10px rgba(0,0,0,0.3)}
+    #qpContent h3{margin-top:0}
+    #qpClose{float:right;cursor:pointer;font-weight:700;color:#0b79d0}
+    .qp-question{margin-bottom:20px;padding:10px;border-bottom:1px solid #e6eef6}
+    .qp-options{margin-left:20px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="logo">TR</div><div>
+      <div class="exam-title" id="examTitle"></div>
+      <div class="small">Live Mock</div>
+    </div></div>
+    <div class="top-center"><div class="timer" id="timer">Time Left<br><span id="time">00:00:00</span></div></div>
+  </header>
+
+  <div id="examPage">
+    <div class="container">
+      <main>
+        <div class="section-tabs" id="sectionTabs"></div>
+        <div class="question-area">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div class="small" id="qIndicator">No. <span id="qNumber">1</span></div>
+          </div>
+          <div class="question-text" id="questionText"></div>
+          <div class="options" id="options"></div>
+          <div style="margin-top:18px;display:flex;gap:8px;align-items:center">
+            <button class="btn" id="markSave">Mark & Save</button>
+            <button class="btn secondary" id="clearResponse">Clear Response</button>
+            <button class="btn secondary" id="saveNext">Save & Next</button>
+            <button class="btn" id="saveOnly">Save</button>
+          </div>
+        </div>
+      </main>
+
+      <aside>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="small">Section: <strong id="currentSectionName"></strong></div>
+          <div class="small">User: <span id="candidateName" class="candidate"></span></div>
+        </div>
+        <div class="legend">
+          <div class="item"><span class="swatch green"></span><span>Answered</span></div>
+          <div class="item"><span class="swatch orange"></span><span>Marked</span></div>
+          <div class="item"><span class="swatch grey"></span><span>Not visited</span></div>
+        </div>
+        <div class="palette" id="palette"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn secondary" id="questionPaper">Question Paper</button>
+          <button class="btn" id="submitTest">Submit Test</button>
+        </div>
+      </aside>
+    </div>
+    <div class="bottom-bar">
+      <div class="controls-left">
+        <button class="btn secondary" id="markAndSaveBottom">Mark & Save</button>
+        <button class="btn secondary" id="clearResponseBottom">Clear Response</button>
+        <button class="btn secondary" id="saveNextBottom">Save & Next</button>
+      </div>
+      <div class="controls-right">
+        <div class="small">Progress: <span id="progress">0/0</span></div>
+        <button class="btn" id="prev">Prev</button>
+        <button class="btn" id="next">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis Page -->
+  <div id="analysisPage">
+    <h2>Test Analysis</h2>
+    <p id="analysisText"></p>
+    <div id="chartContainer"><canvas id="analysisChart"></canvas></div>
+    <button class="btn" id="restartExam">Restart Exam</button>
+  </div>
+
+<div id="detailedAnalysis" style="display:none; margin-top:20px;">
+  <h3>Detailed Analysis</h3>
+  <div id="analysisTable"></div>
+</div>
+
+
+  <!-- Question Paper Modal -->
+  <div id="qpModal">
+    <div id="qpContent">
+      <span id="qpClose">✖</span>
+      <h3>Question Paper</h3>
+      <div id="qpBody"></div>
+    </div>
+  </div>
+
+<script>
+  // Load exam data saved by your admin page (localStorage key: "exam_data")
+  const examData = JSON.parse(localStorage.getItem("exam_data") || "{}");
+  let questions = Array.isArray(examData.questions) ? examData.questions : [];
+  // ensure each question has expected shape (options array etc.)
+  questions = questions.map(q => ({
+    id: q.id ?? null,
+    section: (q.section ?? "").toString(),
+    question: (q.question ?? "").toString(),
+    options: Array.isArray(q.options) ? q.options : (typeof q.options === 'string' ? q.options.split('|') : []),
+    answer: (q.answer ?? "").toString(),
+    status: q.status ?? "",        // "answered" / "marked" / ""
+    selected: q.selected ?? null  // index of chosen option
+  }));
+
+  // settings (support both naming variants, prefer marks* naming)
+  const settings = examData.settings || {};
+  const marksCorrect = (settings.marksCorrect ?? settings.correct ?? 1);
+  const marksWrong   = (settings.marksWrong   ?? settings.wrong   ?? 0);
+  let examTimeMinutes = (settings.time ?? settings.examTime ?? 30);
+  let examTitle = settings.name ?? settings.examName ?? "Exam";
+
+  // state
+  let sections = [];
+  let currentSectionIndex = 0;
+  let filteredIndexes = []; // global indexes in questions[] for current section
+  let currentLocalIndex = 0; // position inside filteredIndexes
+  let totalSeconds = (Number(examTimeMinutes) || 30) * 60;
+  let timerInterval = null;
+  let warningCount = 0;
+
+  // candidate name asked each attempt
+  let candidateName = prompt("Enter your name:") || "User";
+  document.getElementById("candidateName").textContent = candidateName;
+  document.getElementById("examTitle").textContent = examTitle;
+
+  // Build sections from questions
+  function buildSections(){
+    const secMap = {};
+    questions.forEach(q => {
+      const s = q.section || "General";
+      secMap[s] = (secMap[s] || 0) + 1;
+    });
+    return Object.keys(secMap).map((s,i) => ({ id:`sec${i}`, name: s, count: secMap[s] }));
+  }
+  sections = buildSections();
+
+  // Render section tabs
+  function renderSectionTabs(){
+    const el = document.getElementById('sectionTabs');
+    el.innerHTML = '';
+    sections.forEach((s, idx) => {
+      const d = document.createElement('div');
+      d.className = 'tab';
+      d.textContent = `${s.name} (${s.count})`;
+      d.onclick = () => switchSection(idx);
+      el.appendChild(d);
+    });
+  }
+
+  function getSectionIndexes(secIdx){
+    if(!sections[secIdx]) return [];
+    const secName = sections[secIdx].name;
+    return questions.map((q, i) => q.section === secName ? i : null).filter(i => i !== null);
+  }
+
+  function switchSection(idx){
+    currentSectionIndex = idx;
+    filteredIndexes = getSectionIndexes(idx);
+    currentLocalIndex = 0;
+    document.getElementById('currentSectionName').textContent = sections[idx].name;
+    renderPalette();
+    renderQuestion();
+  }
+
+  // Palette
+  function renderPalette(){
+    const pal = document.getElementById('palette');
+    pal.innerHTML = '';
+    filteredIndexes.forEach((globalIdx, localIdx) => {
+      const q = questions[globalIdx];
+      const btn = document.createElement('button');
+      btn.className = 'qbtn';
+      if(localIdx === currentLocalIndex) btn.classList.add('active');
+      if(q.status === 'answered') btn.classList.add('answered');
+      else if(q.status === 'marked') btn.classList.add('marked');
+      else btn.classList.add('notvisited');
+      btn.textContent = (localIdx + 1);
+      btn.onclick = () => {
+        currentLocalIndex = localIdx;
+        renderPalette();
+        renderQuestion();
+      };
+      pal.appendChild(btn);
+    });
+    updateProgress();
+  }
+
+  // Render question and options
+  function renderQuestion(){
+    if(filteredIndexes.length === 0){
+      document.getElementById('questionText').textContent = "No questions in this section.";
+      document.getElementById('options').innerHTML = "";
+      document.getElementById('qNumber').textContent = "0";
+      return;
+    }
+    const globalIdx = filteredIndexes[currentLocalIndex];
+    const q = questions[globalIdx];
+    document.getElementById('qNumber').textContent = currentLocalIndex + 1;
+    document.getElementById('questionText').textContent = q.question;
+    const optEl = document.getElementById('options');
+    optEl.innerHTML = '';
+    q.options.forEach((opt, oi) => {
+      const wrap = document.createElement('label');
+      wrap.className = 'option';
+      const r = document.createElement('input');
+      r.type = 'radio';
+      r.name = 'opt';
+      r.value = oi;
+      if(q.selected !== null && q.selected !== undefined && Number(q.selected) === oi) r.checked = true;
+      r.onchange = () => {
+        q.selected = oi;
+        q.status = 'answered';
+        renderPalette();
+      };
+      const span = document.createElement('span');
+      span.textContent = opt;
+      wrap.appendChild(r);
+      wrap.appendChild(span);
+      optEl.appendChild(wrap);
+    });
+    document.getElementById('currentSectionName').textContent = q.section;
+  }
+
+  function updateProgress(){
+    const answered = questions.filter(q => q.status === 'answered').length;
+    document.getElementById('progress').textContent = `${answered}/${questions.length}`;
+  }
+
+  // Actions
+  function saveAnswer(){
+    const sel = document.querySelector("input[name=opt]:checked");
+    if(!sel) return;
+    const globalIdx = filteredIndexes[currentLocalIndex];
+    questions[globalIdx].selected = Number(sel.value);
+    questions[globalIdx].status = 'answered';
+    renderPalette();
+    updateProgress();
+  }
+
+  function markForReview(){
+    saveAnswer(); // save current answer if any
+    const globalIdx = filteredIndexes[currentLocalIndex];
+    questions[globalIdx].status = 'marked';
+    renderPalette();
+  }
+
+  function clearResponse(){
+    const globalIdx = filteredIndexes[currentLocalIndex];
+    questions[globalIdx].selected = null;
+    questions[globalIdx].status = '';
+    renderPalette();
+    renderQuestion();
+  }
+
+  function nextQ(){
+    if(currentLocalIndex < filteredIndexes.length - 1){
+      currentLocalIndex++;
+      renderPalette();
+      renderQuestion();
+    }
+  }
+  function prevQ(){
+    if(currentLocalIndex > 0){
+      currentLocalIndex--;
+      renderPalette();
+      renderQuestion();
+    }
+  }
+
+  // Question Paper modal (clickable Q links)
+  function showQuestionPaper(){
+    const body = document.getElementById('qpBody');
+    body.innerHTML = '';
+    questions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'qp-question';
+      // status icon
+      let statusIcon = '';
+      if (q.status === 'answered') statusIcon = '✅';
+      else if (q.status === 'marked') statusIcon = '⚑';
+      else statusIcon = '○';
+      // clickable Q link
+      const qlink = document.createElement('a');
+      qlink.href = 'javascript:void(0)';
+      qlink.textContent = `Q${i+1}`;
+      qlink.style.textDecoration = 'underline';
+      qlink.style.cursor = 'pointer';
+      qlink.onclick = () => {
+        // find section index for this global question and jump to it
+        const secIdx = sections.findIndex(s => questions.map((qq)=>qq.section).slice(0).some((_,__)=>false) || sections.indexOf(s) !== -1);
+        // Better: find section containing this global index
+        const targetSecIdx = sections.findIndex(s => questions.map((qq)=>qq.section).indexOf(s.name) !== -1 && getSectionIndexes(sections.indexOf(s)).includes(i));
+        if(targetSecIdx !== -1){
+          // switch to that section
+          switchSection(targetSecIdx);
+          // set local index
+          currentLocalIndex = getSectionIndexes(targetSecIdx).indexOf(i);
+          renderPalette();
+          renderQuestion();
+        } else {
+          // fallback: find which section contains it
+          for(let si = 0; si < sections.length; si++){
+            const idxs = getSectionIndexes(si);
+            const li = idxs.indexOf(i);
+            if(li !== -1){
+              switchSection(si);
+              currentLocalIndex = li;
+              renderPalette();
+              renderQuestion();
+              break;
+            }
+          }
+        }
+        // close modal
+        document.getElementById('qpModal').style.display = 'none';
+      };
+
+      div.innerHTML = `<div><strong></strong> ${q.question} <span style="margin-left:8px">${statusIcon}</span></div>`;
+      const header = div.querySelector('div');
+      header.insertBefore(qlink, header.firstChild);
+      const optDiv = document.createElement('div');
+      optDiv.className = 'qp-options';
+      q.options.forEach((o, oi) => {
+        const chosen = (q.selected !== null && q.selected !== undefined && Number(q.selected) === oi) ? " (chosen)" : "";
+        optDiv.innerHTML += `<div>- ${o}${chosen}</div>`;
+      });
+      div.appendChild(optDiv);
+      body.appendChild(div);
+    });
+    document.getElementById('qpModal').style.display = 'flex';
+  }
+
+  // Timer
+  const timeEl = document.getElementById('time');
+  function startTimer(){
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(()=> {
+      if(totalSeconds <= 0){
+        clearInterval(timerInterval);
+        finishTest();
+        return;
+      }
+      totalSeconds--;
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      timeEl.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  // Finish: compute using option text comparison (normalized) and marks from settings
+  // Finish: compute using option text comparison (normalized) and marks from settings
+function finishTest() {
+  if (timerInterval) clearInterval(timerInterval);
+
+  const total = questions.length;
+  let correct = 0, wrong = 0, attempted = 0;
+  let sectionStats = {};
+  let detailedRows = [];
+
+  questions.forEach((q, i) => {
+    let chosen = "";
+    let status = "Unattempted";
+    if (q.selected !== null && q.selected !== undefined) {
+      chosen = q.options[q.selected];
+      if (String(chosen).trim().toLowerCase() === String(q.answer).trim().toLowerCase()) {
+        correct++;
+        status = "Correct ✅";
+        sectionStats[q.section] = sectionStats[q.section] || { correct:0, wrong:0, unattempted:0 };
+        sectionStats[q.section].correct++;
+      } else {
+        wrong++;
+        status = "Wrong ❌";
+        sectionStats[q.section] = sectionStats[q.section] || { correct:0, wrong:0, unattempted:0 };
+        sectionStats[q.section].wrong++;
+      }
+    } else {
+      sectionStats[q.section] = sectionStats[q.section] || { correct:0, wrong:0, unattempted:0 };
+      sectionStats[q.section].unattempted++;
+    }
+
+    detailedRows.push(`
+      <tr>
+        <td>${i+1}</td>
+        <td>${q.section}</td>
+        <td>${q.question}</td>
+        <td>${chosen || "-"}</td>
+        <td>${q.answer}</td>
+        <td>${status}</td>
+      </tr>
+    `);
+  });
+
+  attempted = correct + wrong;
+  const unattempted = total - attempted;
+  const score = (correct * (Number(marksCorrect) || 0)) + (wrong * (Number(marksWrong) || 0));
+
+  // switch pages
+  document.getElementById('examPage').style.display = 'none';
+  document.getElementById('analysisPage').style.display = 'block';
+
+  // summary
+  document.getElementById('analysisText').innerHTML =
+    `<span class="candidate">${candidateName}</span><br>
+     Attempted: ${attempted} &nbsp; Unattempted: ${unattempted}<br>
+     Correct: ${correct} &nbsp; Wrong: ${wrong}<br>
+     <b>Total Score: ${score}</b><br>
+     <button id="showDetailed">Show Detailed Analysis</button>`;
+
+  // pie chart
+  const ctx = document.getElementById('analysisChart');
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Correct','Wrong','Unattempted'],
+      datasets: [{
+        data: [correct, wrong, unattempted],
+        backgroundColor: ['#66c66b','#ff6666','#d0d8e1']
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // fill detailed table
+  document.getElementById('analysisTable').innerHTML = `
+    <table border="1" cellspacing="0" cellpadding="5" width="100%">
+      <thead>
+        <tr>
+          <th>#</th><th>Section</th><th>Question</th>
+          <th>Your Answer</th><th>Correct Answer</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${detailedRows.join("")}</tbody>
+    </table>
+  `;
+
+  // toggle button
+  document.getElementById('showDetailed').onclick = () => {
+    document.getElementById('detailedAnalysis').style.display = 'block';
+    document.getElementById('showDetailed').style.display = 'none';
+  };
+
+  // save result in localStorage (same as before)
+  const result = {
+    student: candidateName,
+    exam: examTitle,
+    date: new Date().toLocaleString(),
+    totalScore: score,
+    violations: warningCount,
+    sections: sectionStats
+  };
+  let allResults = JSON.parse(localStorage.getItem("exam_results") || "[]");
+  allResults.push(result);
+  localStorage.setItem("exam_results", JSON.stringify(allResults));
+}
+
+  // Warnings: visibilitychange + beforeunload
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){
+      warningCount++;
+      alert(`Warning ${warningCount}/3: Don't switch tabs or refresh. On 3rd violation test will be submitted.`);
+      if(warningCount >= 3){
+        finishTest();
+      }
+    }
+  });
+  window.addEventListener('beforeunload', (e) => {
+    // increment warning (note: auto-submit may not run reliably here due to navigation), still warn user
+    warningCount++;
+    if(warningCount >= 3){
+      // best-effort submit
+      try { finishTest(); } catch(e){}
+    }
+    e.preventDefault();
+    e.returnValue = ''; // standard prompt trigger
+  });
+
+  // Event bindings (keep UI unchanged)
+  document.getElementById('markSave').onclick = () => markForReview();
+  document.getElementById('saveOnly').onclick = () => saveAnswer();
+  document.getElementById('saveNext').onclick = () => { saveAnswer(); nextQ(); };
+  document.getElementById('clearResponse').onclick = () => clearResponse();
+  document.getElementById('next').onclick = () => nextQ();
+  document.getElementById('prev').onclick = () => prevQ();
+  document.getElementById('submitTest').onclick = () => { if(confirm('Are you sure to submit test?')) finishTest(); };
+  document.getElementById('questionPaper').onclick = () => showQuestionPaper();
+  document.getElementById('qpClose').onclick = () => { document.getElementById('qpModal').style.display = 'none'; };
+  document.getElementById('markAndSaveBottom').onclick = () => markForReview();
+  document.getElementById('clearResponseBottom').onclick = () => clearResponse();
+  document.getElementById('saveNextBottom').onclick = () => { saveAnswer(); nextQ(); };
+  document.getElementById('restartExam').onclick = () => { 
+    // restart keeping exam_data; ask name again and reset answers/status
+    candidateName = prompt("Enter your name:") || "User";
+    document.getElementById("candidateName").textContent = candidateName;
+    // reset question states
+    questions = questions.map(q => ({ ...q, status: "", selected: null }));
+    // rebuild sections and UI
+    sections = buildSections();
+    renderSectionTabs();
+    if(sections.length) switchSection(0);
+    totalSeconds = (Number(examTimeMinutes) || 30) * 60;
+    document.getElementById('analysisPage').style.display = 'none';
+    document.getElementById('examPage').style.display = 'block';
+    startTimer();
+  };
+
+  // Initialize UI
+  renderSectionTabs();
+  if(sections.length > 0) switchSection(0);
+  startTimer();
+</script>
+</body>
+</html>

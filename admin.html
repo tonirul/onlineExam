@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Upload Questions</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #0b5ed7; }
+    .settings, .question {
+      border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 15px 0;
+    }
+    label { display: block; margin-top: 8px; font-weight: bold; }
+    input[type="text"], input[type="number"] {
+      width: 100%; padding: 6px; margin-top: 3px;
+      border: 1px solid #ccc; border-radius: 5px;
+    }
+    button {
+      margin-top: 15px; padding: 10px 20px;
+      border: none; border-radius: 20px;
+      background: #0b5ed7; color: #fff; font-weight: bold;
+      cursor: pointer; transition: background 0.3s;
+    }
+    button:hover { background: #0945a3; }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+
+  <!-- Exam Settings -->
+  <div class="settings">
+    <h2>Exam Settings</h2>
+    <label>Exam Name: <input type="text" id="examName" placeholder="Enter exam name"></label>
+    <label>Exam Duration (minutes): <input type="number" id="examTime" placeholder="60"></label>
+    <label>Marks (Correct Answer): <input type="number" id="marksCorrect" value="1"></label>
+    <label>Marks (Wrong Answer): <input type="number" id="marksWrong" value="0"></label>
+  </div>
+
+  <!-- CSV Upload -->
+  <input type="file" id="csvFile" accept=".csv">
+  <button onclick="saveQuestions()">Save to LocalStorage</button>
+
+  <!-- Questions List -->
+  <div id="questionsContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <script>
+    let questions = [];
+
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          questions = results.data.map((q, i) => ({
+            id: q.id || i + 1,
+            section: q.section || "",
+            question: q.question || "",
+            options: typeof q.options === "string" ? q.options.split("|") : [],
+            answer: q.answer || ""
+          }));
+          renderQuestions();
+        }
+      });
+    });
+
+    function renderQuestions() {
+      const container = document.getElementById("questionsContainer");
+      container.innerHTML = "";
+      questions.forEach((q, index) => {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.innerHTML = `
+          <label>Section: <input type="text" value="${q.section}" onchange="updateQuestion(${index}, 'section', this.value)"></label>
+          <label>Question: <input type="text" value="${q.question}" onchange="updateQuestion(${index}, 'question', this.value)"></label>
+          <label>Options (separated by |): <input type="text" value="${q.options.join('|')}" onchange="updateOptions(${index}, this.value)"></label>
+          <label>Answer: <input type="text" value="${q.answer}" onchange="updateQuestion(${index}, 'answer', this.value)"></label>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateQuestion(index, field, value) {
+      questions[index][field] = value;
+    }
+
+    function updateOptions(index, value) {
+      questions[index].options = value.split("|");
+    }
+
+    function saveQuestions() {
+      const examSettings = {
+        name: document.getElementById("examName").value || "Untitled Exam",
+        time: parseInt(document.getElementById("examTime").value) || 60,
+        marksCorrect: parseInt(document.getElementById("marksCorrect").value) || 1,
+        marksWrong: parseInt(document.getElementById("marksWrong").value) || 0
+      };
+
+      const examData = {
+        settings: examSettings,
+        questions: questions
+      };
+
+      localStorage.setItem("exam_data", JSON.stringify(examData));
+      alert("Exam settings and questions saved successfully!");
+    }
+  </script>
+</body>
+</html>

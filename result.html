@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Reports</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #0b5ed7; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    tr:hover { background: #f9f9f9; }
+    .section-detail { font-size: 0.9em; color: #555; }
+    .btn { background:#0b5ed7; color:#fff; padding:6px 12px; border:none; border-radius:4px; cursor:pointer; }
+    .btn:hover { opacity:0.9; }
+  </style>
+</head>
+<body>
+  <h1>Student Reports</h1>
+
+  <button class="btn" onclick="exportCSV()">Export to CSV</button>
+
+  <table id="reportTable">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Exam</th>
+        <th>Date</th>
+        <th>Total Score</th>
+        <th>Violations</th>
+        <th>Section Details</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function loadReports() {
+      const results = JSON.parse(localStorage.getItem("exam_results") || "[]");
+      const tbody = document.querySelector("#reportTable tbody");
+      tbody.innerHTML = "";
+
+      results.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.student}</td>
+          <td>${r.exam}</td>
+          <td>${r.date}</td>
+          <td>${r.totalScore}</td>
+          <td>${r.violations}</td>
+          <td class="section-detail">
+            ${Object.entries(r.sections || {}).map(([sec, s]) =>
+              `<strong>${sec}</strong>: C=${s.correct}, W=${s.wrong}, U=${s.unattempted}`
+            ).join("<br>")}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportCSV() {
+      const results = JSON.parse(localStorage.getItem("exam_results") || "[]");
+      if (!results.length) {
+        alert("No reports found.");
+        return;
+      }
+
+      let csv = "Student,Exam,Date,Total Score,Violations,Section,Correct,Wrong,Unattempted\n";
+      results.forEach(r => {
+        Object.entries(r.sections || {}).forEach(([sec, s]) => {
+          csv += `"${r.student}","${r.exam}","${r.date}",${r.totalScore},${r.violations},"${sec}",${s.correct},${s.wrong},${s.unattempted}\n`;
+        });
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "student_reports.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>
