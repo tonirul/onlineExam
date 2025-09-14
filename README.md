@@ -17,7 +17,7 @@ Questions and exam settings are saved in **LocalStorage**, making it easy to tes
 - Edit questions directly in the interface.
 - Save exam data to **LocalStorage** for students to attempt.
 
-### 👨‍🎓 Exam Interface (`exam.html`)
+### 👨‍🎓 Exam Interface (`index.html`)
 - Candidate name prompt before starting.
 - Section-wise tabs and palette for navigation.
 - Options:
